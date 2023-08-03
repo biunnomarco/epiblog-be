@@ -1,0 +1,7 @@
+POST http://localhost:6060/login HTTP/1.1
+Content-Type: application/json
+
+{
+    "email": "adp@gmail.com",
+    "password": "adp"
+}
