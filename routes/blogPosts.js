@@ -9,7 +9,8 @@ const multer = require('multer')
 const cloudinary = require("cloudinary").v2
 const {CloudinaryStorage} = require("multer-storage-cloudinary")
 const crypto = require('crypto')
-const cover = require ('../middleware/uploadCover')
+const cover = require ('../middleware/uploadCover');
+const verifyToken = require('../middleware/verifyToken');
 
 const router = express.Router();
 
@@ -197,8 +198,32 @@ router.patch('/blogPosts/:id', async (req, res) => {
     }
 })
 
+
+//! PATCH POST COVER
+
+router.patch('/blogPosts/:id/changeCover', cover.single('cover'), async(req, res) => {
+    const {id} = req.params;
+    
+    try {
+        console.log(req.file.path)
+        const dataToUpdate = req.file.path;
+        const options = {new: true};
+        const result = await BlogPostModel.findByIdAndUpdate(id, {cover: dataToUpdate}, options);
+
+        res.status(200).send({
+            statusCode:200,
+            result
+        })
+    } catch (error) {
+        res.status(500).send({
+            statusCode: 500,
+            message: "Internal server error"
+        })
+    }
+})
+
 //!DELETE
-router.delete('/blogPosts/:id', async (req, res) => {
+router.delete('/blogPosts/:id', verifyToken, async (req, res) => {
     const { id } = req.params;
     const blogPostExists = await BlogPostModel.findById(id);
     const user = await authorModel.findById(blogPostExists.author)
