@@ -49,7 +49,7 @@ router.get('/blogPosts/title', async (req, res) => {
                 $regex: '.*' + postTitle + '.*',
                 $options: 'i'
             }
-        })
+        }).populate('author')
 
         if (!postByTitle || postByTitle.length <= 0) {
             return res.status(404).send({
