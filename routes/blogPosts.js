@@ -9,6 +9,7 @@ const multer = require('multer')
 const cloudinary = require("cloudinary").v2
 const {CloudinaryStorage} = require("multer-storage-cloudinary")
 const crypto = require('crypto')
+const cover = require ('../middleware/uploadCover')
 
 const router = express.Router();
 
@@ -91,7 +92,7 @@ router.get('/blogPosts', async (req, res) => {
 })
 
 //!POST
-router.post('/blogPosts/internalUpload', uploads.single('cover'), async (req, res) => {
+/* router.post('/blogPosts/internalUpload', uploads.single('cover'), async (req, res) => {
     const user = await authorModel.findById(req.body.author)
     console.log(req.file)
     const path = req.file.path.replaceAll("\\", '/')
@@ -124,7 +125,44 @@ router.post('/blogPosts/internalUpload', uploads.single('cover'), async (req, re
             error,
         })
     }
+}) */
+
+
+router.post('/blogPosts/internalUpload', cover.single('cover'), async (req, res) => {
+    const user = await authorModel.findById(req.body.author)
+    console.log(req.file)
+    /* const path = req.file.path.replaceAll("\\", '/') */
+    const newPost = new BlogPostModel({
+        category: req.body.category,
+        title: req.body.title,
+        cover: req.file.path,
+        readTime: {
+            value: req.body.readTimeValue,
+            unit: req.body.readTimeUnit
+        },
+        author: user,
+        content: req.body.content
+    })
+
+    try {
+        const blogPost = await newPost.save()
+        await authorModel.updateOne({_id: user}, {$push: {posts: newPost}})
+
+        res.status(201).send({
+            img: req.file.path,
+            statusCode: 201,
+            message: 'Post saved successfully',
+            payload: blogPost
+        })
+    } catch (error) {
+        res.status(500).send({
+            statusCode: 500,
+            message: "Internal server error",
+            error,
+        })
+    }
 })
+
 
 //!PATCH
 router.patch('/blogPosts/:id', async (req, res) => {
